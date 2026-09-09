@@ -104,4 +104,16 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Related commit: [078c2d9]
 - Remaining uncertainty: None for this specific issue
 
+## Entry 9 / 2026-09-09 / 22:15 UTC
+- Symptom: Dockerfile created a dedicated non-root user (`app`, uid 10001) via `groupadd`/`useradd`, but the final `USER root` directive before CMD meant the container actually ran as root, contradicting the task's requirement to avoid root/privileged operation where practical
+- Hypothesis: switching `USER root` to `USER app` would run the process as the intended non-root user without breaking functionality, since no remaining step in the Dockerfile required root privileges after the earlier removal of `COPY config/app.env /srv/app.env`
+- Command or test: changed `USER root` to `USER app` in Dockerfile; `docker compose build --no-cache app-01 app-02`; `docker compose up -d --force-recreate app-01 app-02`; `docker compose ps -a`; `curl /ready`; `curl -X POST /records`; `docker exec app-01 whoami`
+- Actual output: both containers built and started healthy; `/ready` returned `{"status":"ready", ...}`; POST to `/records` succeeded (id 5, "USER app test"); `docker exec app-01 whoami` returned `app`
+- Failed attempt and what changed your thinking: None — the fix worked on the first attempt, confirming `USER root` was leftover/unnecessary rather than required
+- Root cause: Dockerfile ended with an unnecessary `USER root` directive, likely a leftover from when the image also copied a secrets file (`config/app.env`) into `/srv`; once that COPY was removed, no step required root privileges at runtime
+- Fix: changed `USER root` to `USER app` in Dockerfile (final line before EXPOSE/CMD)
+- Retest evidence: `docker exec app-01 whoami` confirms the process runs as `app`, not `root`; all endpoints (/ready, /records) continue to function normally with no permission errors
+- Related commit: [pending]
+- Remaining uncertainty: None for this specific issue
+
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
