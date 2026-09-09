@@ -50,6 +50,18 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Related commit: [dd4a554]
 - Remaining uncertainty: None for this specific issue
 
+## Entry 5 / 2026-09-09 / 20:50 UTC
+- Symptom: /instance endpoint always returned "app-01" regardless of which backend actually served the request (6/6 requests showed app-01)
+- Hypothesis: both app-01 and app-02 services are configured with the same INSTANCE_ID value
+- Command or test: grep -A5 "app-02:" docker-compose.yml
+- Actual output: app-02 service block had INSTANCE_ID: "app-01" (same as app-01's own value)
+- Failed attempt and what changed your thinking: None — the duplicate value was visible directly in docker-compose.yml
+- Root cause: docker-compose.yml set INSTANCE_ID: "app-01" under the app-02 service instead of "app-02", so both instances reported the same identity even though NGINX was actually load-balancing between two separate containers
+- Fix: changed INSTANCE_ID under the app-02 service block from "app-01" to "app-02"
+- Retest evidence: 6 consecutive requests to /instance now alternate correctly: app-02, app-01, app-02, app-01, app-02, app-01
+- Related commit: [pending]
+- Remaining uncertainty: None for this specific issue
+
 
 
 
