@@ -113,7 +113,7 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Root cause: Dockerfile ended with an unnecessary `USER root` directive, likely a leftover from when the image also copied a secrets file (`config/app.env`) into `/srv`; once that COPY was removed, no step required root privileges at runtime
 - Fix: changed `USER root` to `USER app` in Dockerfile (final line before EXPOSE/CMD)
 - Retest evidence: `docker exec app-01 whoami` confirms the process runs as `app`, not `root`; all endpoints (/ready, /records) continue to function normally with no permission errors
-- Related commit: [pending]
+- Related commit: [489a291]
 - Remaining uncertainty: None for this specific issue
 
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
