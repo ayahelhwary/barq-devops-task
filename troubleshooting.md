@@ -26,6 +26,30 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Related commit: [5d71ae8]
 - Remaining uncertainty: None for this specific issue
 
+## Entry 3 / 2026-09-09 / 20:31 UTC
+- Symptom: curl to http://127.0.0.1:8080/ returns "HTTP/1.1 502 Bad Gateway"
+- Hypothesis: NGINX upstream definition points to the wrong port for app-01
+- Command or test: docker compose logs nginx
+- Actual output: "connect() failed (111: Connection refused) ... upstream: http://172.21.0.3:8081/"
+- Failed attempt and what changed your thinking: None — nginx error log directly named the wrong port
+- Root cause: nginx/nginx.conf upstream block listed "server app-01:8081" instead of 8080; the Flask app listens on 8080 (per Dockerfile EXPOSE and APP_PORT)
+- Fix: changed "server app-01:8081" to "server app-01:8080" in nginx/nginx.conf
+- Retest evidence: after this fix alone, curl still returned 502 but the nginx error log target changed from "172.21.0.3:8081" to "172.21.0.3:8080" — confirming this specific fix worked and exposed a separate remaining issue (see Entry 4)
+- Related commit: [3ff8f21]
+- Remaining uncertainty: None for this specific issue
+
+## Entry 4 / 2026-09-09 / 20:42 UTC
+- Symptom: even with the correct upstream port (8080), nginx still returns 502 with "Connection refused" to http://172.21.0.3:8080/
+- Hypothesis: the Flask app inside app-01 is not actually listening on an address reachable from other containers
+- Command or test: docker exec nginx wget -qO- --timeout=2 http://app-01:8080/health
+- Actual output: "wget: can't connect to remote host (172.21.0.3): Connection refused"
+- Failed attempt and what changed your thinking: None — the direct wget test from inside the nginx container isolated the problem to the app process binding, not networking or DNS
+- Root cause: docker-compose.yml set APP_HOST: "127.0.0.1" for both app services, so Flask only listened on the container's own loopback interface and was unreachable from other containers on the same network
+- Fix: changed APP_HOST from "127.0.0.1" to "0.0.0.0" in docker-compose.yml
+- Retest evidence: `docker exec nginx wget ... /health` now returns `{"instance_id":"app-01","service":"barq-api","status":"alive","version":"2.0.0"}`; `curl http://127.0.0.1:8080/` now returns HTTP/1.1 200 OK with a valid JSON body
+- Related commit: [dd4a554]
+- Remaining uncertainty: None for this specific issue
+
 
 
 
