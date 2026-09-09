@@ -101,7 +101,7 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Root cause: docker-compose.yml mounted the named volume to the wrong path (`/backup` instead of `/data`) and additionally overrode the real data directory with `tmpfs`, so PostgreSQL never wrote to persistent storage
 - Fix: changed the volume mount from `postgres-data:/var/lib/postgresql/backup` to `postgres-data:/var/lib/postgresql/data`; removed the `tmpfs: [/var/lib/postgresql/data]` line entirely
 - Retest evidence: records with ids 1-4 all survived a full `docker compose down` (without `-v`) followed by `up -d`, with no init.sql re-seeding and no ID reset
-- Related commit: [pending]
+- Related commit: [078c2d9]
 - Remaining uncertainty: None for this specific issue
 
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
