@@ -11,7 +11,7 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Root cause: docker-compose.yml healthcheck test hits /healthz, but app/server.py only defines a /health route (no "z")
 - Fix: changed the healthcheck test in docker-compose.yml from /healthz to /health
 - Retest evidence: `docker compose ps -a` shows app-01/app-02 as (healthy); `docker inspect app-01` shows Health.Status="healthy" with 5 consecutive checks, ExitCode 0
-- Related commit: [هنحطه بعد الـcommit]
+- Related commit: [c8cc46f]
 - Remaining uncertainty: None
 
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
