@@ -23,7 +23,7 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Root cause: docker-compose.yml nginx port mapping (":81") does not match the "listen 80;" directive in nginx.conf
 - Fix: changed nginx port mapping in docker-compose.yml from "127.0.0.1:${PUBLIC_PORT:-8080}:81" to "127.0.0.1:${PUBLIC_PORT:-8080}:80"
 - Retest evidence: curl now returns "HTTP/1.1 502 Bad Gateway" instead of "Empty reply from server" — confirms NGINX is now reachable and listening correctly; the 502 itself points to a separate, still-unfixed upstream issue (see Entry 3)
-- Related commit: [pending commit]
+- Related commit: [5d71ae8]
 - Remaining uncertainty: None for this specific issue
 
 
