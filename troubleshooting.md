@@ -62,6 +62,23 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Related commit: [fdfcc2c]
 - Remaining uncertainty: None for this specific issue
 
+## Entry 6 / 2026-09-09 / 20:53 UTC
+- Symptom: /ready endpoint returns {"status":"not_ready","dependencies":{"postgres":"unavailable","redis":"unavailable"}}
+- Hypothesis: DATABASE_URL and REDIS_URL in config/app.env point to wrong ports and/or wrong credentials
+- Command or test: docker compose logs app-02 | grep dependency_error; compared config/app.env against docker-compose.yml service definitions
+- Actual output: app log showed "error_type":"OperationalError" for postgres and "error_type":"ConnectionError" for redis;
+  config/app.env had DATABASE_URL pointing to postgres:5433 (actual: 5432, no override in compose) with password
+  ending in "...vK8d", while docker-compose.yml POSTGRES_PASSWORD ends in "...vK8c"; REDIS_URL pointed to redis:6380
+  (actual: 6379, no override in compose)
+- Failed attempt and what changed your thinking: None — comparing the two files directly showed all three mismatches at once
+- Root cause: config/app.env had three unrelated but compounding errors: wrong PostgreSQL port (5433 vs 5432),
+  a one-character password mismatch with docker-compose.yml's POSTGRES_PASSWORD, and wrong Redis port (6380 vs 6379)
+- Fix: corrected config/app.env — DATABASE_URL now uses port 5432 and the matching password (...vK8c);
+  REDIS_URL now uses port 6379
+- Retest evidence: after `docker compose up -d --build` (app.env is baked into the image), /ready now returns
+  {"status":"ready","dependencies":{"postgres":"ready","redis":"ready"}}
+- Related commit: [pending]
+- Remaining uncertainty: None for this specific issue
 
 
 
