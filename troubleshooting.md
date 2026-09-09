@@ -116,4 +116,16 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Related commit: [489a291]
 - Remaining uncertainty: None for this specific issue
 
+## Entry 10 / 2026-09-09 / 22:50 UTC
+- Symptom: with one backend (app-02) stopped, NGINX returned raw 502/504 errors to the client for roughly half of all requests instead of transparently serving them from the healthy backend (app-01)
+- Hypothesis: NGINX's default `proxy_next_upstream off;` setting disabled automatic failover to the other pool member on connection failure/timeout/5xx
+- Command or test: stopped app-02; ran validate.py before and after adding `proxy_next_upstream error timeout http_502 http_503 http_504;` and `proxy_next_upstream_tries 2;` to nginx.conf
+- Actual output: before the fix, 6/12 validate.py checks failed with 502/504 while app-02 was down; after the fix (and loading it correctly — see note below), 11/12 checks passed while app-02 was down, with only `both_backends_serving` failing as expected, and all other endpoints (health, records, counter, unknown_route) served successfully via app-01 with no client-visible errors
+- Failed attempt and what changed your thinking: reloading the new nginx.conf by running `docker compose restart nginx` AFTER already stopping app-02 caused NGINX itself to fail to start entirely (`nginx: [emerg] host not found in upstream "app-02:8080"`), because NGINX resolves all upstream server names once at config-load time and refuses to start if any name cannot be resolved. This taught me that NGINX's static `upstream` block treats DNS resolution as a hard startup dependency, not a runtime check — a real single point of failure if NGINX itself ever needs to restart while any backend is down. The correct fix was to reload NGINX's config via `--force-recreate` while ALL backends were still running, and only stop a backend afterward, without touching NGINX again
+- Root cause: `nginx.conf` explicitly set `proxy_next_upstream off;`, disabling NGINX's default retry-on-failure behavior between pool members
+- Fix: changed to `proxy_next_upstream error timeout http_502 http_503 http_504;` with `proxy_next_upstream_tries 2;`
+- Retest evidence: validate.py confirms 11/12 (only the both-backends-presence check fails, by design) while one backend is down, and 12/12 once it is restored, with zero 502/504 responses reaching the client in either state
+- Related commit: [pending]
+- Remaining uncertainty: NGINX's static upstream resolution at startup remains a known limitation — if NGINX itself is ever restarted while a backend is unreachable, NGINX will fail to start entirely. Documented as a production follow-up in security_review.md (needs `resolver` + dynamic resolution, or an orchestrator like Kubernetes/Consul that handles this natively)
+
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
