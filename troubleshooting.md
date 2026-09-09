@@ -80,6 +80,16 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Related commit: [16eed12]
 - Remaining uncertainty: None for this specific issue
 
-
+## Entry 7 / 2026-09-09 / 21:05 UTC
+- Symptom: postgres and redis containers had host ports published (127.0.0.1:15432:5432 and 127.0.0.1:16379:6379), allowing direct access to the databases from the host machine, bypassing the app layer
+- Hypothesis: removing the `ports` mapping for postgres and redis in docker-compose.yml would block host-level access while keeping inter-container communication intact (since services on the same Compose network communicate via service name regardless of published ports)
+- Command or test: `docker compose -p barq-assessment up -d --force-recreate postgres redis` then `docker port postgres` and `docker port redis`; also `curl -s http://127.0.0.1:8080/ready`
+- Actual output: `docker port postgres` and `docker port redis` returned no output (no published ports); `/ready` still returned `{"status":"ready","dependencies":{"postgres":"ready","redis":"ready"}}`
+- Failed attempt and what changed your thinking: None — removing the `ports` lines was sufficient on the first attempt
+- Root cause: docker-compose.yml unnecessarily published postgres (15432->5432) and redis (16379->6379) directly to 127.0.0.1 on the host, violating the requirement that only NGINX be reachable from the host
+- Fix: removed the `ports:` line from both the postgres and redis service definitions in docker-compose.yml
+- Retest evidence: `docker port postgres` and `docker port redis` both return empty (no host ports published); `/ready` continues to report both dependencies as ready, confirming app-01/app-02 still reach postgres and redis internally via service name over the backend network
+- Related commit: [pending]
+- Remaining uncertainty: None for this specific issue
 
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
