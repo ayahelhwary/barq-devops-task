@@ -59,7 +59,7 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Root cause: docker-compose.yml set INSTANCE_ID: "app-01" under the app-02 service instead of "app-02", so both instances reported the same identity even though NGINX was actually load-balancing between two separate containers
 - Fix: changed INSTANCE_ID under the app-02 service block from "app-01" to "app-02"
 - Retest evidence: 6 consecutive requests to /instance now alternate correctly: app-02, app-01, app-02, app-01, app-02, app-01
-- Related commit: [pending]
+- Related commit: [fdfcc2c]
 - Remaining uncertainty: None for this specific issue
 
 
