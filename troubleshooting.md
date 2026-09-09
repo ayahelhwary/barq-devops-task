@@ -77,7 +77,7 @@ Keep chronological entries. Copy this block for each meaningful investigation.
   REDIS_URL now uses port 6379
 - Retest evidence: after `docker compose up -d --build` (app.env is baked into the image), /ready now returns
   {"status":"ready","dependencies":{"postgres":"ready","redis":"ready"}}
-- Related commit: [pending]
+- Related commit: [16eed12]
 - Remaining uncertainty: None for this specific issue
 
 
