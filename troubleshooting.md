@@ -14,4 +14,19 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Related commit: [c8cc46f]
 - Remaining uncertainty: None
 
+## Entry 2 / 2026-09-09 / 20:25 UTC
+- Symptom: `curl http://127.0.0.1:8080/` returns "Empty reply from server" even though all containers show as running/healthy
+- Hypothesis: NGINX is not actually listening on the port Docker maps to the host
+- Command or test: docker compose ps -a (showed 127.0.0.1:8080->81/tcp); grep "listen" nginx/nginx.conf (showed "listen 80;")
+- Actual output: port mismatch confirmed — compose maps host 8080 to container port 81, but nginx listens on 80 inside the container
+- Failed attempt and what changed your thinking: None — the mismatch was visible directly by comparing docker-compose.yml and nginx.conf
+- Root cause: docker-compose.yml nginx port mapping (":81") does not match the "listen 80;" directive in nginx.conf
+- Fix: changed nginx port mapping in docker-compose.yml from "127.0.0.1:${PUBLIC_PORT:-8080}:81" to "127.0.0.1:${PUBLIC_PORT:-8080}:80"
+- Retest evidence: curl now returns "HTTP/1.1 502 Bad Gateway" instead of "Empty reply from server" — confirms NGINX is now reachable and listening correctly; the 502 itself points to a separate, still-unfixed upstream issue (see Entry 3)
+- Related commit: [pending commit]
+- Remaining uncertainty: None for this specific issue
+
+
+
+
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
