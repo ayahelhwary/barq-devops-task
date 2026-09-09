@@ -89,6 +89,18 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Root cause: docker-compose.yml unnecessarily published postgres (15432->5432) and redis (16379->6379) directly to 127.0.0.1 on the host, violating the requirement that only NGINX be reachable from the host
 - Fix: removed the `ports:` line from both the postgres and redis service definitions in docker-compose.yml
 - Retest evidence: `docker port postgres` and `docker port redis` both return empty (no host ports published); `/ready` continues to report both dependencies as ready, confirming app-01/app-02 still reach postgres and redis internally via service name over the backend network
+- Related commit: [9295005]
+- Remaining uncertainty: None for this specific issue
+
+## Entry 8 / 2026-09-09 / 21:52 UTC
+- Symptom: PostgreSQL data did not persist across container recreation; named volume `postgres-data` was mounted to `/var/lib/postgresql/backup` (not PostgreSQL's actual data directory), while `/var/lib/postgresql/data` was overridden with `tmpfs`, so all data lived in RAM and was wiped on every container removal
+- Hypothesis: remapping the named volume to the correct data directory and removing the tmpfs override would make records survive container recreation
+- Command or test: created a record ("Persistence proof", id 3), ran `docker compose up -d --force-recreate postgres`, confirmed id 3 still present with no init.sql re-run; added a second record ("Real persistence proof v2", id 4); ran full `docker compose down` (no -v) then `up -d`; checked `/records` again
+- Actual output: after `--force-recreate postgres` alone, id 3 remained and init.sql did not re-seed; after full `down`/`up -d`, all four records (ids 1-4) were present with no duplication or reset
+- Failed attempt and what changed your thinking: an earlier persistence test (before this fix was actually applied to the running container) appeared to pass — id 3 survived a down/up cycle — but this was a false positive: tmpfs was still wiping data, and init.sql was simply reseeding ids 1-2 from scratch each time, with the next inserted record coincidentally landing on id 3 again due to auto-increment starting fresh. This taught me to verify that a config change is actually live in the running container (via `--force-recreate` + a config check) before trusting a retest, and to use a second distinguishing record + a second full down/up cycle to rule out coincidental ID matches
+- Root cause: docker-compose.yml mounted the named volume to the wrong path (`/backup` instead of `/data`) and additionally overrode the real data directory with `tmpfs`, so PostgreSQL never wrote to persistent storage
+- Fix: changed the volume mount from `postgres-data:/var/lib/postgresql/backup` to `postgres-data:/var/lib/postgresql/data`; removed the `tmpfs: [/var/lib/postgresql/data]` line entirely
+- Retest evidence: records with ids 1-4 all survived a full `docker compose down` (without `-v`) followed by `up -d`, with no init.sql re-seeding and no ID reset
 - Related commit: [pending]
 - Remaining uncertainty: None for this specific issue
 

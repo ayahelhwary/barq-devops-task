@@ -24,9 +24,8 @@ services:
       POSTGRES_DB: barq_tasks
       POSTGRES_PASSWORD: BarqLabOnly_7qN2vK8c
     volumes:
-      - postgres-data:/var/lib/postgresql/backup
+      - postgres-data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    tmpfs: [/var/lib/postgresql/data]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U barq_app -d barq_tasks"]
       interval: 3s
