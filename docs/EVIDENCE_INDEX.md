@@ -1,8 +1,8 @@
 # Evidence and Submission Index
 
 * Repository URL: https://github.com/ayahelhwary/barq-devops-task
-* Final commit: [Add after final implementation is complete]
-* Matching CI run: [Add matching CI run]
+* Final commit: eb66f90
+* Matching CI run: https://github.com/ayahelhwary/barq-devops-task/actions/runs/34511347264
 * Continuous 12-18 minute video URL: [Add after recording]
 * Challenge receipt ID: [Add after running the challenge during the video]
 * Starting video commit: [Add before recording]
