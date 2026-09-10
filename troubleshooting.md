@@ -180,7 +180,7 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Fix: implemented backup.sh/restore.sh with pg_dump/pg_restore custom format
 - Retest evidence: see "Actual output" — full destroy-and-restore cycle proven end-to-end,
   not just container recreation with the volume intact
-- Related commit: [pending]
+- Related commit: [dab41c0]
 - Remaining uncertainty: None
 
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
