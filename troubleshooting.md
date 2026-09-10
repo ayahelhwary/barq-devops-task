@@ -200,5 +200,5 @@
 - Root cause: N/A (deliverable configuration, not a bug fix)
 - Fix: added `restart: unless-stopped` and `deploy.resources.limits` (cpus/memory) to the x-app anchor, postgres, redis, and nginx in docker-compose.yml
 - Retest evidence: see "Actual output" — full validate.py and failure_test.py suites both pass with no regressions after the limits were applied
-- Related commit: [pending]
+- Related commit: [d9ed766]
 - Remaining uncertainty: resource limits were chosen based on comfortable headroom for this lab's light load, not from a measured production baseline (see decisions.md/security_review.md for the production follow-up: size limits from `docker stats` under real load before using these values outside a lab)

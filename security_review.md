@@ -106,12 +106,15 @@ separated from open production follow-ups in each entry.
   stopped until someone notices and runs `docker compose up` manually.
 - **Impact:** Reduced availability after any transient failure; the task explicitly asks for
   "restart policies" to be set correctly, and none are currently configured beyond the default.
-- **Implemented fix / commit:** Not yet implemented at time of writing.
-- **Production follow-up:** Add `restart: unless-stopped` to postgres, redis, and nginx (and
-  reconsider `"no"` on the app services, weighed against Finding 6 — if nginx or a backend
-  restarts in a crash loop while a dependency is down, `unless-stopped` will keep retrying rather
-  than surfacing the failure clearly, so this needs to be paired with proper healthchecks and
-  alerting rather than applied blindly).
+- **Implemented fix / commit:** Added `restart: unless-stopped` to the `x-app` anchor (app-01,
+  app-02), postgres, redis, and nginx in docker-compose.yml. Commit `d9ed766`. Verified with
+  `docker inspect <container> --format='{{.HostConfig.RestartPolicy.Name}}'` returning
+  `unless-stopped` for all four services, and a full `validate.py` (12/12) + `failure_test.py`
+  (7/7) rerun showing no regression.
+- **Production follow-up:** `unless-stopped` does not fully resolve Finding 6's static-DNS
+  limitation — if NGINX crashes and restarts while a backend happens to be down, it will still
+  fail the same way on each restart attempt until the backend returns. This needs to be paired
+  with proper alerting (so a human is notified of the crash-loop) rather than relied on alone.
 - **How to verify:** `docker inspect <container> --format='{{.HostConfig.RestartPolicy.Name}}'`
   should report `unless-stopped` (or similar) instead of `no`.
 
@@ -122,11 +125,17 @@ separated from open production follow-ups in each entry.
   service, including NGINX and the healthy backend.
 - **Impact:** A resource issue in one component becomes a full-stack outage instead of a contained
   failure of one container.
-- **Implemented fix / commit:** Not yet implemented at time of writing.
-- **Production follow-up:** Add explicit memory and CPU limits per service (sized from observed
-  baseline usage under `docker stats`), and pair with the readiness/health checks already in place
-  so an over-limit container is both constrained and correctly reported as unhealthy rather than
-  silently degraded.
+- **Implemented fix / commit:** Added `deploy.resources.limits` to the `x-app` anchor (0.5 CPU /
+  256MB per app instance), postgres (1.0 CPU / 512MB), redis (0.5 CPU / 128MB), and nginx (0.5 CPU
+  / 128MB) in docker-compose.yml. Commit `d9ed766`. Verified with `docker inspect <container>
+  --format='{{.HostConfig.Memory}} {{.HostConfig.NanoCpus}}'` showing non-zero values for all four
+  services, and a full `validate.py` (12/12) + `failure_test.py` (7/7) rerun showing no OOM kills
+  or regressions under normal lab load.
+- **Production follow-up:** These limits were chosen for comfortable headroom under this lab's
+  light synthetic load, not measured from a real production baseline. Before reusing these values
+  outside this lab, size them from `docker stats` under representative load, and add alerting on
+  containers approaching their memory limit (rather than only discovering the limit was too low
+  when the container gets OOM-killed).
 - **How to verify:** `docker stats` under a load test should show each container capped at its
   configured limit rather than growing unbounded.
 
