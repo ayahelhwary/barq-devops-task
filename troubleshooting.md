@@ -125,7 +125,26 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Root cause: `nginx.conf` explicitly set `proxy_next_upstream off;`, disabling NGINX's default retry-on-failure behavior between pool members
 - Fix: changed to `proxy_next_upstream error timeout http_502 http_503 http_504;` with `proxy_next_upstream_tries 2;`
 - Retest evidence: validate.py confirms 11/12 (only the both-backends-presence check fails, by design) while one backend is down, and 12/12 once it is restored, with zero 502/504 responses reaching the client in either state
-- Related commit: [pending]
+- Related commit: [5d9cb0b]
 - Remaining uncertainty: NGINX's static upstream resolution at startup remains a known limitation — if NGINX itself is ever restarted while a backend is unreachable, NGINX will fail to start entirely. Documented as a production follow-up in security_review.md (needs `resolver` + dynamic resolution, or an orchestrator like Kubernetes/Consul that handles this natively)
+
+## Entry X / 2026-09-10 / 01:19 UTC
+- Symptom: validate.py was a placeholder stub that exits 2 ("NOT IMPLEMENTED")
+- Hypothesis: N/A — required deliverable, not a bug to diagnose
+- Command or test: implemented validate.py per assessment/TASK.md Part 3
+  (public access, /health, /ready, both backends via /instance, /records GET+POST,
+  /counter increment, unknown route 404, network isolation for postgres/redis)
+- Actual output: `python3 validate.py` -> 12/12 checks PASS, exit code 0:
+  public_access, health_endpoint, ready_endpoint (postgres/redis both ready),
+  instance_endpoint, both_backends_serving (app-01 and app-02 both observed),
+  records_get, records_post_valid, records_post_invalid_title_rejected (400),
+  counter_endpoint (incremented 13 -> 14), unknown_route_404, no_host_port_postgres,
+  no_host_port_redis
+- Failed attempt and what changed your thinking: None
+- Root cause: N/A (deliverable implementation)
+- Fix: implemented validate.py with bounded waits and PASS/FAIL reporting
+- Retest evidence: see "Actual output" above — full run, exit code 0
+- Related commit: [pending]
+- Remaining uncertainty: None
 
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
