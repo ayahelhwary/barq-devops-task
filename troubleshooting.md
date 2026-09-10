@@ -160,7 +160,7 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Root cause: N/A (deliverable implementation, not a bug fix)
 - Fix: implemented failure_test.py per assessment/TASK.md Part 3 requirements
 - Retest evidence: exit code 0, 7/7 PASS, zero errors observed on the surviving backend during the outage
-- Related commit: [pending]
+- Related commit: [c45b308]
 - Remaining uncertainty: None
 
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
