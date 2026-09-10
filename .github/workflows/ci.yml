@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-environment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Syntax check - docker-compose.yml
+        run: docker compose -p barq-assessment config > /dev/null
+
+      - name: Syntax check - Python scripts
+        run: python3 -m py_compile validate.py failure_test.py app/server.py
+
+      - name: Prepare environment file
+        run: cp .env.example .env
+
+      - name: Build images
+        run: docker compose -p barq-assessment build
+
+      - name: Start environment
+        run: docker compose -p barq-assessment up -d
+
+      - name: Wait for containers to report healthy
+        run: |
+          for i in $(seq 1 30); do
+            total=0
+            healthy=0
+            for c in app-01 app-02 postgres redis; do
+              total=$((total + 1))
+              status=$(docker inspect "$c" --format='{{.State.Health.Status}}' 2>/dev/null || echo "missing")
+              if [ "$status" = "healthy" ]; then
+                healthy=$((healthy + 1))
+              fi
+            done
+            echo "Healthy: $healthy/$total (attempt $i/30)"
+            if [ "$healthy" = "$total" ]; then
+              echo "All services healthy."
+              break
+            fi
+            sleep 2
+          done
+          docker compose -p barq-assessment ps -a
+
+      - name: Run validation
+        run: python3 validate.py
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose -p barq-assessment logs --no-color
+
+      - name: Tear down
+        if: always()
+        run: docker compose -p barq-assessment down -v
