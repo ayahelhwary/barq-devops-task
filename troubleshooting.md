@@ -128,7 +128,7 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Related commit: [5d9cb0b]
 - Remaining uncertainty: NGINX's static upstream resolution at startup remains a known limitation — if NGINX itself is ever restarted while a backend is unreachable, NGINX will fail to start entirely. Documented as a production follow-up in security_review.md (needs `resolver` + dynamic resolution, or an orchestrator like Kubernetes/Consul that handles this natively)
 
-## Entry X / 2026-09-10 / 01:19 UTC
+## Entry 11 / 2026-09-10 / 01:19 UTC
 - Symptom: validate.py was a placeholder stub that exits 2 ("NOT IMPLEMENTED")
 - Hypothesis: N/A — required deliverable, not a bug to diagnose
 - Command or test: implemented validate.py per assessment/TASK.md Part 3
@@ -145,6 +145,22 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Fix: implemented validate.py with bounded waits and PASS/FAIL reporting
 - Retest evidence: see "Actual output" above — full run, exit code 0
 - Related commit: [db13814]
+- Remaining uncertainty: None
+
+## Entry 12 / 2026-09-10 / 01:24 UTC
+- Symptom: failure_test.py and backup.sh/restore.sh were placeholder stubs that exit 2 ("NOT IMPLEMENTED")
+- Hypothesis: N/A — these were required deliverables, not bugs to diagnose
+- Command or test: implemented failure_test.py to stop app-01, verify app-02 keeps serving,
+  restart app-01, and verify it rejoins the pool
+- Actual output: `python3 failure_test.py` -> 7/7 checks passed
+  (baseline_both_instances_serving, stop_target_backend, survivor_keeps_serving_during_outage
+  [0/20 errors during outage], public_endpoint_still_reachable_during_outage,
+  restart_target_backend, target_backend_healthy_again, recovered_backend_serving_traffic)
+- Failed attempt and what changed your thinking: None
+- Root cause: N/A (deliverable implementation, not a bug fix)
+- Fix: implemented failure_test.py per assessment/TASK.md Part 3 requirements
+- Retest evidence: exit code 0, 7/7 PASS, zero errors observed on the surviving backend during the outage
+- Related commit: [pending]
 - Remaining uncertainty: None
 
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
