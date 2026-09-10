@@ -183,4 +183,16 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Related commit: [dab41c0]
 - Remaining uncertainty: None
 
+## Entry 14 / 2026-09-10 / 02:10 UTC
+- Symptom: .github/workflows/ci.yml was missing entirely; the task requires CI on push/PR (checkout -> syntax/Compose checks -> build -> start -> wait for readiness -> validate)
+- Hypothesis: N/A — required deliverable, not a bug to diagnose
+- Command or test: created .github/workflows/ci.yml with the required pipeline stages; first version embedded an inline Python health-check script inside a YAML `run:` block
+- Actual output: VS Code's YAML linter flagged the first version with "Implicit keys need to be on a single line" (6 errors) at the lines containing the embedded Python `for`/`if` blocks — the mixed indentation of Python inside a YAML block scalar was ambiguous to the parser
+- Failed attempt and what changed your thinking: the first CI draft used `docker compose ps --format json | python3 -c "..."` with a multi-line inline Python script to count unhealthy containers; this caused YAML parsing errors because Python's own indentation was being partially interpreted as YAML structure. This taught me that embedding a different language's multi-line logic inside a YAML block scalar is fragile — pure bash (using `docker inspect --format` per container in a loop) is more robust here because it has no indentation-sensitive syntax that conflicts with YAML
+- Root cause: mixing an indentation-sensitive language (Python) inside a YAML `run: |` block scalar created ambiguous parsing at specific indentation boundaries
+- Fix: replaced the Python-based healthy-container-count logic with a plain bash loop using `docker inspect "$c" --format='{{.State.Health.Status}}'` per container name
+- Retest evidence: YAML file opened cleanly with no linter errors; pushed to GitHub, and the Actions run for commit `1746f4e`/`ee4ac22` completed successfully (green) — checkout, syntax checks, build, up, healthy-wait loop, validate.py, and teardown all passed
+- Related commit: [ee4ac22]
+- Remaining uncertainty: None
+
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
