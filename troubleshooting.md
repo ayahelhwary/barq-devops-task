@@ -144,7 +144,7 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Root cause: N/A (deliverable implementation)
 - Fix: implemented validate.py with bounded waits and PASS/FAIL reporting
 - Retest evidence: see "Actual output" above — full run, exit code 0
-- Related commit: [pending]
+- Related commit: [db13814]
 - Remaining uncertainty: None
 
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
