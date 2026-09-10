@@ -163,4 +163,24 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Related commit: [c45b308]
 - Remaining uncertainty: None
 
+## Entry 13 / 2026-09-10 / 01:42 UTC
+- Symptom: backup.sh and restore.sh were placeholder stubs that exit 2 ("NOT IMPLEMENTED")
+- Hypothesis: N/A — required deliverables, not bugs to diagnose
+- Command or test: implemented backup.sh (pg_dump --format=custom via docker exec) and
+  restore.sh (pg_restore --clean --if-exists, defaults to the most recent file in ./backups)
+- Actual output: created a marker record "BACKUP-PROOF-RECORD" (id 12) via POST /records,
+  ran ./backup.sh -> ./backups/barq_tasks_20260910T012822Z.dump (4.0K); then ran
+  `docker compose down -v` (destroys the named volume itself, not just the containers) and
+  `docker compose up -d --build` from scratch — GET /records confirmed only the 2 seed rows
+  remained (id 1, 2), proving the volume was genuinely wiped, not just the containers restarted;
+  ran ./restore.sh (auto-selected the latest backup) -> GET /records afterwards showed all 12
+  original records including "BACKUP-PROOF-RECORD" (id 12)
+- Failed attempt and what changed your thinking: None
+- Root cause: N/A (deliverable implementation)
+- Fix: implemented backup.sh/restore.sh with pg_dump/pg_restore custom format
+- Retest evidence: see "Actual output" — full destroy-and-restore cycle proven end-to-end,
+  not just container recreation with the volume intact
+- Related commit: [pending]
+- Remaining uncertainty: None
+
 Do not fabricate a failed attempt just to fill the template. Record actual attempts.
