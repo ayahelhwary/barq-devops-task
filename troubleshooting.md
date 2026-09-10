@@ -1,7 +1,3 @@
-# Troubleshooting journal
-
-Keep chronological entries. Copy this block for each meaningful investigation.
-
 ## Entry 1 / 2026-09-09 / 19:53 UTC
 - Symptom: app-01 and app-02 containers stayed "unhealthy" indefinitely after startup
 - Hypothesis: the Docker healthcheck is targeting a route the app doesn't implement
@@ -195,4 +191,4 @@ Keep chronological entries. Copy this block for each meaningful investigation.
 - Related commit: [ee4ac22]
 - Remaining uncertainty: None
 
-Do not fabricate a failed attempt just to fill the template. Record actual attempts.
+
