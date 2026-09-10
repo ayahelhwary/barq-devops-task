@@ -15,12 +15,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Syntax check - docker-compose.yml
-        run: docker compose -p barq-assessment config > /dev/null
-
-      - name: Syntax check - Python scripts
-        run: python3 -m py_compile validate.py failure_test.py app/server.py
-
       - name: Prepare environment files
         env:
           LAB_POSTGRES_PASSWORD: ${{ secrets.LAB_POSTGRES_PASSWORD }}
@@ -30,6 +24,12 @@ jobs:
           DATABASE_URL=postgresql://barq_app:${LAB_POSTGRES_PASSWORD}@postgres:5432/barq_tasks
           REDIS_URL=redis://redis:6379/0
           EOF
+
+      - name: Syntax check - docker-compose.yml
+        run: docker compose -p barq-assessment config > /dev/null
+
+      - name: Syntax check - Python scripts
+        run: python3 -m py_compile validate.py failure_test.py app/server.py
 
       - name: Build images
         run: docker compose -p barq-assessment build
