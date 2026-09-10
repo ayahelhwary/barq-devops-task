@@ -191,4 +191,14 @@
 - Related commit: [ee4ac22]
 - Remaining uncertainty: None
 
-
+## Entry 15 / 2026-09-10 / 03:08 UTC
+- Symptom: no service in docker-compose.yml had a restart policy beyond the implicit default ("no"), and no service had CPU/memory resource limits, despite the task explicitly requiring both
+- Hypothesis: N/A — required configuration, not a bug to diagnose
+- Command or test: added `restart: unless-stopped` to the x-app anchor, postgres, redis, and nginx; added `deploy.resources.limits` (cpus/memory) to all four; ran `docker compose config` (syntax check), `docker compose up -d --force-recreate`, `docker inspect` on each container to confirm both settings took effect, then re-ran validate.py and failure_test.py in full
+- Actual output: `docker inspect` confirmed `unless-stopped` and non-zero memory/CPU limits on app-01 (256MB/0.5 CPU), nginx (128MB/0.5 CPU), and postgres (512MB/1.0 CPU); validate.py 12/12 PASS; failure_test.py 7/7 PASS — no regression from adding the limits
+- Failed attempt and what changed your thinking: the first attempt only added `deploy.resources.limits` to postgres and redis, missing the x-app anchor (app-01/app-02) and nginx entirely. This was caught by explicitly inspecting all four services individually rather than assuming the edit was complete after one successful `docker compose config` syntax check — syntax validity does not imply completeness
+- Root cause: N/A (deliverable configuration, not a bug fix)
+- Fix: added `restart: unless-stopped` and `deploy.resources.limits` (cpus/memory) to the x-app anchor, postgres, redis, and nginx in docker-compose.yml
+- Retest evidence: see "Actual output" — full validate.py and failure_test.py suites both pass with no regressions after the limits were applied
+- Related commit: [pending]
+- Remaining uncertainty: resource limits were chosen based on comfortable headroom for this lab's light load, not from a measured production baseline (see decisions.md/security_review.md for the production follow-up: size limits from `docker stats` under real load before using these values outside a lab)
