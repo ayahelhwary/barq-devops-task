@@ -11,3 +11,4 @@ evidence/local/
 backups/
 *.dump
 config/app.env
+backups/
