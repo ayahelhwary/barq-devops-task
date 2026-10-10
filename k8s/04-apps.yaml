@@ -1,0 +1,170 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-01
+  namespace: barq
+  labels: {app: app-01}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: app-01}
+  template:
+    metadata:
+      labels: {app: app-01}
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done"]
+      containers:
+        - name: app
+          image: ayahelhwary/barq-assessment-app:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef: {name: app-config}
+          env:
+            - {name: INSTANCE_ID, value: app-01}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: {name: barq-secrets, key: DATABASE_URL}
+          readinessProbe:
+            httpGet: {path: /health, port: 8080}
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /health, port: 8080}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests: {cpu: 100m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-01
+  namespace: barq
+spec:
+  selector: {app: app-01}
+  ports:
+    - {port: 8080, targetPort: 8080}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-02
+  namespace: barq
+  labels: {app: app-02}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: app-02}
+  template:
+    metadata:
+      labels: {app: app-02}
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done"]
+      containers:
+        - name: app
+          image: ayahelhwary/barq-assessment-app:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef: {name: app-config}
+          env:
+            - {name: INSTANCE_ID, value: app-02}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: {name: barq-secrets, key: DATABASE_URL}
+          readinessProbe:
+            httpGet: {path: /health, port: 8080}
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /health, port: 8080}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests: {cpu: 100m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-02
+  namespace: barq
+spec:
+  selector: {app: app-02}
+  ports:
+    - {port: 8080, targetPort: 8080}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-03
+  namespace: barq
+  labels: {app: app-03}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: app-03}
+  template:
+    metadata:
+      labels: {app: app-03}
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done"]
+      containers:
+        - name: app
+          image: ayahelhwary/barq-assessment-app:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef: {name: app-config}
+          env:
+            - {name: INSTANCE_ID, value: app-03}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: {name: barq-secrets, key: DATABASE_URL}
+          readinessProbe:
+            httpGet: {path: /health, port: 8080}
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /health, port: 8080}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests: {cpu: 100m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-03
+  namespace: barq
+spec:
+  selector: {app: app-03}
+  ports:
+    - {port: 8080, targetPort: 8080}
