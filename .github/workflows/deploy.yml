@@ -30,12 +30,17 @@ jobs:
     needs: build
     runs-on: self-hosted
     steps:
-      - name: Roll out new image
+      - uses: actions/checkout@v4
+
+      - name: Apply manifests from Git (image tag = commit SHA)
         run: |
-          for d in app-01 app-02 app-03; do
-            kubectl -n barq set image deployment/$d app=${{ env.IMAGE }}:${{ github.sha }}
-          done
-          for d in app-01 app-02 app-03; do
+          kubectl apply -f k8s/00-namespace.yaml
+          kubectl apply -f k8s/01-configmaps.yaml -f k8s/02-postgres.yaml -f k8s/03-redis.yaml -f k8s/05-nginx.yaml
+          sed "s#barq-assessment-app:1.0#barq-assessment-app:${GITHUB_SHA}#" k8s/04-apps.yaml | kubectl apply -f -
+
+      - name: Wait for the rollout
+        run: |
+          for d in postgres redis app-01 app-02 app-03 nginx; do
             kubectl -n barq rollout status deployment/$d --timeout=180s
           done
           kubectl -n barq get pods -o wide

@@ -1,3 +1,32 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+spec:
+  capacity: {storage: 2Gi}
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-manual
+  # Node-local storage. The directory must exist on the worker: sudo mkdir -p /var/lib/barq/postgres
+  local: {path: /var/lib/barq/postgres}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - {key: kubernetes.io/hostname, operator: In, values: [k8s-worker]}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  namespace: barq
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-manual
+  volumeName: postgres-pv
+  resources:
+    requests: {storage: 2Gi}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -43,9 +72,8 @@ spec:
             - {name: data, mountPath: /var/lib/postgresql/data}
             - {name: init, mountPath: /docker-entrypoint-initdb.d, readOnly: true}
       volumes:
-        # Lab setup: data lives as long as the pod. Use a PVC for real persistence.
         - name: data
-          emptyDir: {}
+          persistentVolumeClaim: {claimName: postgres-data}
         - name: init
           configMap: {name: postgres-init}
 ---
